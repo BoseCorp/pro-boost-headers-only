@@ -14,8 +14,23 @@ import tempfile
 from time import time
 logging.basicConfig()
 
+def get_file_set(src_path, dst_path, minlist, logger):
+    if not minlist:
+        logger.info("Adding all boost directories and files...")
+        shutil.move(src_path, dst_path)
+        return
 
-def _generate_headers(ver: str, verbose: bool):
+    try:
+        pathlib.Path.mkdir(dst_path, exist_ok=False)
+        inFile = open(minlist)
+        logger.info(f"Adding minimal directories and files for {minlist}")
+        for file_or_dir in inFile.read().splitlines():
+            logger.info(f"  {file_or_dir}")
+            shutil.move(src_path / file_or_dir, dst_path)
+    except FileNotFoundError as err:
+        logger.error(err)
+
+def _generate_headers(ver: str, verbose: bool, minlist: str):
     # setup logging
     logger = logging.getLogger('boost-make-headers')
     if verbose:
@@ -80,7 +95,7 @@ def _generate_headers(ver: str, verbose: bool):
                 shutil.rmtree(base / 'boost')
                 for f in pathlib.Path(__file__).parent.glob("Boost_*_README.md"):
                     f.unlink()
-            shutil.move(dst / 'boost_tmp_build/include/boost', base / 'boost')
+            get_file_set(dst / 'boost_tmp_build/include/boost', base / 'boost', minlist, logger)
             shutil.move(dst / archive_name / 'LICENSE_1_0.txt', base / 'LICENSE_1_0.txt')
             shutil.move(dst / archive_name / 'README.md', base / f'Boost_{BOOST_VER_UND}_README.md')
     finally:
@@ -92,7 +107,7 @@ def _generate_headers(ver: str, verbose: bool):
         # then ensure cleanup happens in this "finally" statement
         ntf.close()
 
-    logger.info('Done creating base Boost headers!')
+    logger.info('Done creating Boost headers!')
 
     logger.info("Applying patches...")
     patch_dir = pathlib.Path(__file__).parent / "patches"
@@ -110,6 +125,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument('--boost-version', type=str,
                         help='Boost version to download formatted as [major].[minor].[patch].', required=True)
-    parser.add_argument('-v', action='store_true', help='Enable verbose logging.', default=False)
+    parser.add_argument('-v', action='store_true', help='Enable verbose logging.', default="")
+    parser.add_argument('--only', type=str, help='path to list of directories or files to copy', required=False)
     args = parser.parse_args()
-    _generate_headers(ver=args.boost_version, verbose=args.v)
+    _generate_headers(ver=args.boost_version, verbose=args.v, minlist=args.only)

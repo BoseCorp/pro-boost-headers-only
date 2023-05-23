@@ -17,6 +17,7 @@ Structure
     ├── boost/ : Contents of Boost includes directory (generated)
     ├── Boost_README_[version].md : Boost README file (generated)
     ├── LICENSE_1_0.txt : Boost license (generated)
+    ├── json.deps : Example of a minimal dependency list for Boost.Json
     ├── make_headers.py : script to create generated files
     └── README.rst : this README file
 
@@ -36,6 +37,16 @@ run very simply as follows:
 To update the version of Boost, give a different Boost version to the
 `--boost-version` option in the format: `[major].[minor].[patch]`.
 The `-v` option is optional and turns on verbose logging.
+
+Creating a Minimal Set of Headers
+---------------------------------
+
+To create a minimal set of headers, you can specify a file with a list of
+directories and files to include, and only those headers will be included.
+
+.. code-block:: bash
+
+    python3 make_headers.py --boost-version "1.82.0" --only json.deps
 
 Patches
 -------
